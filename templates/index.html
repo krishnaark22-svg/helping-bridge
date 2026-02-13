@@ -96,13 +96,24 @@
         const statusEl = document.getElementById('status-text');
         const videoEl = document.getElementById('video-frame');
         const trainBtn = document.getElementById('train-btn');
+        const speakBtn = document.getElementById('manual-speak');
+        
         let lastState = "waiting";
-        let lastSpoken = ""; // Tracks the last word spoken to prevent "echo"
+        let lastSpoken = ""; 
         let audioAllowed = false;
+        let isProcessingAudio = false;
 
         function startExperience() {
-            document.getElementById('start-overlay').style.opacity = '0';
-            setTimeout(() => document.getElementById('start-overlay').remove(), 1000);
+            // 1. Fade out overlay
+            const overlay = document.getElementById('start-overlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 1000);
+            
+            // 2. FORCE UNLOCK AUDIO (Crucial for Chrome/Edge)
+            // We play a silent buffer so the browser knows user interacted
+            const silentAudio = new Audio();
+            silentAudio.play().catch(e => console.log("Audio unlock attempt"));
+            
             audioAllowed = true;
             updateStatus(); 
         }
@@ -118,13 +129,13 @@
                 const res = await fetch('/get_status');
                 const data = await res.json();
                 
-                // 1. Handle Text & Auto-Speak
+                // --- 1. Handle Text & State ---
                 if (data.text === "Waiting" || data.text === "Unknown" || data.text.includes("Model")) {
                     if (lastState !== "waiting") {
                         statusEl.innerText = "Listening...";
                         statusEl.className = "waiting";
                         lastState = "waiting";
-                        lastSpoken = ""; // <--- FIX: Allow repeating the same word if hand was dropped
+                        lastSpoken = ""; // Reset so we can say the word again later
                     }
                 } else {
                     // Valid Gesture Detected
@@ -134,14 +145,15 @@
                         lastState = "active";
 
                         // Auto-Speak Logic
-                        if (audioAllowed && data.text !== lastSpoken) {
+                        if (audioAllowed && data.text !== lastSpoken && !isProcessingAudio) {
+                            console.log("Triggering auto-speak for:", data.text);
                             triggerSpeak();
                             lastSpoken = data.text;
                         }
                     }
                 }
 
-                // 2. Handle Recording Visuals
+                // --- 2. Handle Recording Visuals ---
                 if (data.is_recording) {
                     videoEl.classList.add('recording');
                     trainBtn.disabled = true;
@@ -167,14 +179,18 @@
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({label: label})
             });
-            document.getElementById('new-gesture').value = ""; // Clear input after clicking
+            document.getElementById('new-gesture').value = ""; 
         }
 
         async function triggerSpeak() {
             const text = statusEl.innerText;
             const lang = document.getElementById('lang-select').value;
             
-            if (statusEl.classList.contains('waiting')) return;
+            // Don't speak if we are waiting or already processing
+            if (statusEl.classList.contains('waiting') || isProcessingAudio) return;
+
+            isProcessingAudio = true;
+            speakBtn.innerText = "• • •"; // Visual feedback
 
             try {
                 const res = await fetch('/process_audio', {
@@ -185,13 +201,30 @@
                 const data = await res.json();
                 
                 if (data.audio_url) {
-                    const audio = document.getElementById('audio-player');
-                    // Add timestamp to force browser to play new audio even if URL is same
-                    audio.src = data.audio_url + "?t=" + new Date().getTime();
-                    audio.play();
+                    // Force a new request with timestamp to bypass cache
+                    const audio = new Audio(data.audio_url + "?t=" + new Date().getTime());
+                    
+                    audio.onended = () => { isProcessingAudio = false; speakBtn.innerText = "Speak"; };
+                    audio.onerror = (e) => { 
+                        console.error("Audio Playback Error", e);
+                        speakBtn.innerText = "Err";
+                        speakBtn.style.borderColor = "red";
+                        isProcessingAudio = false;
+                    };
+                    
+                    await audio.play();
+                    speakBtn.innerText = "Speak";
+                    speakBtn.style.borderColor = "#333";
+                } else {
+                    console.error("Server returned no audio URL");
+                    speakBtn.innerText = "No Audio";
+                    isProcessingAudio = false;
                 }
-            } catch(e) { console.error("Audio Error:", e); }
+            } catch(e) { 
+                console.error("Fetch Error:", e);
+                speakBtn.innerText = "Net Err";
+                speakBtn.style.borderColor = "red";
+                isProcessingAudio = false;
+            }
         }
     </script>
-</body>
-</html>
