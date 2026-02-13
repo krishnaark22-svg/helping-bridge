@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Bridge</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,300;1,600&family=Manrope:wght@200;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0a0a0a; --text-main: #e8e8e8; --text-muted: #666; --accent: #d4c4a8; --danger: #b35959; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background-color: var(--bg); color: var(--text-main); font-family: 'Manrope', sans-serif; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; letter-spacing: 0.02em; }
+        .vignette { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, rgba(20,20,20,0) 0%, var(--bg) 80%); pointer-events: none; z-index: 1; }
+        h1 { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-style: italic; font-size: 2.5rem; color: var(--text-muted); margin-bottom: 2rem; opacity: 0.6; z-index: 2; }
+        
+        .mirror-container { position: relative; width: 60vh; height: 45vh; border-radius: 4px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.6); transition: all 0.6s ease; z-index: 2; }
+        .mirror-container img { width: 100%; height: 100%; object-fit: cover; filter: sepia(10%) contrast(1.1) brightness(0.9); transition: filter 0.5s ease; }
+        .mirror-container.recording { transform: scale(0.98); box-shadow: 0 0 0 1px var(--danger); }
+        .mirror-container.recording img { filter: grayscale(100%) brightness(0.8); }
+        
+        .voice-output { margin-top: 3rem; min-height: 4rem; text-align: center; z-index: 2; }
+        #status-text { font-family: 'Cormorant Garamond', serif; font-size: 3.5rem; font-weight: 600; color: var(--text-main); background: linear-gradient(to bottom, #fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent; transition: opacity 0.5s; }
+        #status-text.waiting { font-size: 1.5rem; font-family: 'Manrope', sans-serif; font-weight: 200; color: var(--text-muted); -webkit-text-fill-color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
+        
+        /* Floating Controls */
+        .controls { position: fixed; bottom: 40px; display: flex; gap: 30px; align-items: center; z-index: 10; opacity: 0; transform: translateY(20px); transition: all 0.5s ease; background: rgba(10, 10, 10, 0.8); padding: 15px 30px; border-radius: 50px; border: 1px solid #222; backdrop-filter: blur(10px); }
+        body:hover .controls { opacity: 1; transform: translateY(0); }
+        
+        .control-group { display: flex; flex-direction: column; gap: 5px; }
+        
+        input, select { background: transparent; border: none; border-bottom: 1px solid #333; color: var(--text-main); font-family: 'Manrope', sans-serif; padding: 5px 0; font-size: 0.9rem; outline: none; text-align: center; width: 120px; transition: border-color 0.3s; }
+        input:focus, select:focus { border-color: var(--accent); }
+        select { color: var(--text-muted); cursor: pointer; }
+        
+        button { background: transparent; color: var(--text-muted); border: 1px solid #333; padding: 10px 20px; font-size: 0.8rem; letter-spacing: 1px; cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 50px; white-space: nowrap; }
+        button:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
+        button:active { transform: translateY(0); }
+        button:disabled { border-color: #222; color: #333; cursor: default; transform: none; }
+        
+        /* Reset Button Specific Style */
+        .btn-reset { border-color: #5a2e2e; color: #b35959; }
+        .btn-reset:hover { border-color: #ff4d4d; color: #ff4d4d; }
+
+        #audio-player { display: none; }
+        
+        /* Start Overlay */
+        #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 1s ease; }
+        #start-btn { font-family: 'Cormorant Garamond', serif; font-size: 2rem; color: var(--text-main); background: none; border: none; cursor: pointer; opacity: 0.8; transition: opacity 0.3s; padding: 20px; }
+        #start-btn:hover { opacity: 1; transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <div id="start-overlay">
+        <button id="start-btn" onclick="startExperience()">Click to Connect</button>
+    </div>
+
+    <div class="vignette"></div>
+    <h1>the bridge</h1>
+    
+    <div class="mirror-container" id="video-frame">
+        <img src="{{ url_for('video_feed') }}" alt="Reflection">
+    </div>
+
+    <div class="voice-output">
+        <p id="status-text" class="waiting">Silence</p>
+    </div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <input type="text" id="new-gesture" placeholder="Gesture Name">
+            <button id="train-btn" onclick="startTraining()">Learn</button>
+        </div>
+
+        <div style="width: 1px; height: 40px; background: #333;"></div>
+
+        <div class="control-group">
+            <select id="lang-select">
+                <option value="English">English</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Malayalam">Malayalam</option>
+                <option value="Tamil">Tamil</option>
+                <option value="Telegu">Telugu</option>
+            </select>
+            <button id="manual-speak" onclick="triggerSpeak()">Speak</button>
+        </div>
+
+        <div style="width: 1px; height: 40px; background: #333;"></div>
+
+        <button class="btn-reset" onclick="resetBrain()">Reset Brain</button>
+        
+        <audio id="audio-player"></audio>
+    </div>
+
+    <script>
+        const statusEl = document.getElementById('status-text');
+        const videoEl = document.getElementById('video-frame');
+        const trainBtn = document.getElementById('train-btn');
+        let lastState = "waiting";
+        let lastSpoken = ""; // Tracks the last word spoken to prevent "echo"
+        let audioAllowed = false;
+
+        function startExperience() {
+            document.getElementById('start-overlay').style.opacity = '0';
+            setTimeout(() => document.getElementById('start-overlay').remove(), 1000);
+            audioAllowed = true;
+            updateStatus(); 
+        }
+
+        async function resetBrain() {
+            if(!confirm("Are you sure? This will delete all learned gestures.")) return;
+            await fetch('/reset_model', { method: 'POST' });
+            location.reload();
+        }
+
+        async function updateStatus() {
+            try {
+                const res = await fetch('/get_status');
+                const data = await res.json();
+                
+                // 1. Handle Text & Auto-Speak
+                if (data.text === "Waiting" || data.text === "Unknown" || data.text.includes("Model")) {
+                    if (lastState !== "waiting") {
+                        statusEl.innerText = "Listening...";
+                        statusEl.className = "waiting";
+                        lastState = "waiting";
+                        lastSpoken = ""; // <--- FIX: Allow repeating the same word if hand was dropped
+                    }
+                } else {
+                    // Valid Gesture Detected
+                    if (statusEl.innerText !== data.text) {
+                        statusEl.innerText = data.text;
+                        statusEl.className = ""; 
+                        lastState = "active";
+
+                        // Auto-Speak Logic
+                        if (audioAllowed && data.text !== lastSpoken) {
+                            triggerSpeak();
+                            lastSpoken = data.text;
+                        }
+                    }
+                }
+
+                // 2. Handle Recording Visuals
+                if (data.is_recording) {
+                    videoEl.classList.add('recording');
+                    trainBtn.disabled = true;
+                    trainBtn.innerText = "Learning...";
+                    statusEl.innerText = "Hold Still";
+                    statusEl.className = "waiting";
+                } else {
+                    videoEl.classList.remove('recording');
+                    trainBtn.disabled = false;
+                    trainBtn.innerText = "Learn";
+                }
+            } catch (e) { 
+                console.error("Connection paused:", e); 
+            }
+            setTimeout(updateStatus, 500);
+        }
+
+        async function startTraining() {
+            const label = document.getElementById('new-gesture').value;
+            if (!label) return;
+            await fetch('/add_gesture', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({label: label})
+            });
+            document.getElementById('new-gesture').value = ""; // Clear input after clicking
+        }
+
+        async function triggerSpeak() {
+            const text = statusEl.innerText;
+            const lang = document.getElementById('lang-select').value;
+            
+            if (statusEl.classList.contains('waiting')) return;
+
+            try {
+                const res = await fetch('/process_audio', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({text: text, language: lang})
+                });
+                const data = await res.json();
+                
+                if (data.audio_url) {
+                    const audio = document.getElementById('audio-player');
+                    // Add timestamp to force browser to play new audio even if URL is same
+                    audio.src = data.audio_url + "?t=" + new Date().getTime();
+                    audio.play();
+                }
+            } catch(e) { console.error("Audio Error:", e); }
+        }
+    </script>
+</body>
+</html>
