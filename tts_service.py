@@ -1,6 +1,7 @@
 from gtts import gTTS 
 import os
 import hashlib
+
 def text_to_speech(text,lang_name):
     try:
         cache_dir=os.path.join('static','4_cache')
@@ -12,12 +13,12 @@ def text_to_speech(text,lang_name):
         file_hash=hashlib.md5(unique_str.encode()).hexdigest()
         filename=f"tts_{file_hash}.mp3"
         filepath=os.path.join(cache_dir,filename)
+        web_path=f"/static/4_cache/{filename}"
         if os.path.exists(filepath):
-            return f"audio_cache/{filename}"
+            return web_path
         tts=gTTS(text=text,lang=lang_code,slow=False)
         tts.save(filepath)
-        return f"audio_cache/{filename}"
+        return web_path
     except Exception as e:
         print(f"TTS Error:{e}")
         return None
-        
