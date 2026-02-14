@@ -68,10 +68,11 @@ python app.py
 ## Project Documentation
 
 #### Screenshots (Add at least 3)
+![Home](3.png)
 Home screen
-
+![Train](4.png)
 Training
-
+![End](5.png)
 End result
 
 #### Diagrams!
@@ -79,11 +80,11 @@ End result
 
 **System Architecture:**
 
-![Architecture Diagram](docs/architecture.png)
+![Architecture Diagram](1.png)
 
 **Application Workflow:**
 
-![Workflow](docs/workflow.png)
+![Workflow](2.png)
 *Add caption explaining your workflow*
 
 ---
@@ -142,13 +143,9 @@ Press CTRL+C to quit
 ## Project Demo
 
 ### Video
-[Add your demo video link here - YouTube, Google Drive, etc.]
+![demo](https://drive.google.com/file/d/156ndJFbV2iSWXjCooYWYRbqKybnVTMad/view?usp=sharing)
 
-*Explain what the video demonstrates - key features, user flow, technical highlights*
-
-### Additional Demos
-[Add any extra demo materials/links - Live site, APK download, online demo, etc.]
-
+Video Demonstrates how to use the software, how to train and how it works after training
 ---
 
 ## Team Contributions
@@ -164,4 +161,5 @@ This project is licensed under the [MIT] License - see the [LICENSE](LICENSE) fi
 ---
 
 Made with ❤️ at TinkerHub
+
 
