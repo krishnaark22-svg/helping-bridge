@@ -37,7 +37,6 @@ Using KNN to train gestures and associated text and display text, audio when the
 ## Features
 
 List the key features of your project:
-- Feature 1: [Description]
 **Real-Time Gesture Recognition**: Uses MediaPipe and OpenCV to track hand landmarks with high precision and low latency.
 - **Custom Gesture Training**: Users can teach the system new signs instantly by recording gestures directly through the web interface.
 - **Multilingual Support**: Translates recognized gestures into English, Hindi, Malayalam, Tamil, and Telugu using Google Translate.
@@ -69,22 +68,18 @@ python app.py
 ## Project Documentation
 
 #### Screenshots (Add at least 3)
+Home screen
 
-![Screenshot1](Add screenshot 1 here with proper name)
-*Add caption explaining what this shows*
+Training
 
-![Screenshot2](Add screenshot 2 here with proper name)
-*Add caption explaining what this shows*
+End result
 
-![Screenshot3](Add screenshot 3 here with proper name)
-*Add caption explaining what this shows*
+#### Diagrams!
 
-#### Diagrams
 
 **System Architecture:**
 
 ![Architecture Diagram](docs/architecture.png)
-*Explain your system architecture - components, data flow, tech stack interaction*
 
 **Application Workflow:**
 
@@ -169,3 +164,4 @@ This project is licensed under the [MIT] License - see the [LICENSE](LICENSE) fi
 ---
 
 Made with ❤️ at TinkerHub
+
