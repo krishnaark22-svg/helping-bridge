@@ -7,3 +7,4 @@ scikit-learn
 gTTS
 googletrans==4.0.0-rc1
 protobuf==3.20.3
+gunicorn
